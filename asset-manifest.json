@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/mangal-frontend/static/css/main.80be62c5.css",
-    "main.js": "/mangal-frontend/static/js/main.f0a0386f.js",
+    "main.js": "/mangal-frontend/static/js/main.0034797a.js",
     "static/media/fire.jpg": "/mangal-frontend/static/media/fire.cb472307e1766a4ae6ac.jpg",
     "index.html": "/mangal-frontend/index.html",
     "main.80be62c5.css.map": "/mangal-frontend/static/css/main.80be62c5.css.map",
-    "main.f0a0386f.js.map": "/mangal-frontend/static/js/main.f0a0386f.js.map"
+    "main.0034797a.js.map": "/mangal-frontend/static/js/main.0034797a.js.map"
   },
   "entrypoints": [
     "static/css/main.80be62c5.css",
-    "static/js/main.f0a0386f.js"
+    "static/js/main.0034797a.js"
   ]
 }
