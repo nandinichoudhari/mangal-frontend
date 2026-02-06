@@ -70,7 +70,7 @@ function Navbar({ cartCount }) {
     <>
       <div className="logo-space">
         <img
-          src="public/logo-removebg-preview.png"
+          src={`${process.env.PUBLIC_URL}/logo-removebg-preview.png`}
           alt="Mangal Enterprises"
           className="logo-img"
         />
