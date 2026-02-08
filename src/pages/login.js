@@ -4,33 +4,67 @@ import { useNavigate, Link } from "react-router-dom";
 function Login() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState(1); // 1=phone, 2=otp
+  const [step, setStep] = useState(1); // 1 = phone, 2 = otp
   const navigate = useNavigate();
 
-  const sendOtp = () => {
-    if (phone.length === 10) {
-      setStep(2); // Go to OTP step
-    } else {
+  // SEND OTP (calls backend)
+  const sendOtp = async () => {
+    if (phone.length !== 10) {
       alert("Enter valid 10-digit phone number");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:5000/api/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ phone })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setStep(2);
+      } else {
+        alert(data.message || "Failed to send OTP");
+      }
+    } catch (error) {
+      alert("Server error. Please try again.");
     }
   };
 
-  // 🔥 FIXED verifyOtp function
-  const verifyOtp = () => {
-    if (otp === "1234") {
-      localStorage.setItem("loggedIn", "true");
-      localStorage.setItem("phone", phone);
-      
-      // 🔥 REDIRECT BACK TO CHECKOUT FLOW
-      const cartItems = JSON.parse(localStorage.getItem('cart') || '[]');
-      if (cartItems.length > 0) {
-        const address = localStorage.getItem('deliveryAddress');
-        navigate(address ? "/payment" : "/address"); // Checkout flow
+  // VERIFY OTP (creates user in MongoDB)
+  const verifyOtp = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ phone, otp })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        localStorage.setItem("loggedIn", "true");
+        localStorage.setItem("phone", phone);
+
+        // Redirect logic (kept exactly as you designed)
+        const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
+        if (cartItems.length > 0) {
+          const address = localStorage.getItem("deliveryAddress");
+          navigate(address ? "/payment" : "/address");
+        } else {
+          navigate("/cart");
+        }
       } else {
-        navigate("/cart"); // Normal flow
+        alert(data.message || "Invalid OTP");
       }
-    } else {
-      alert("Wrong OTP. Try 1234");
+    } catch (error) {
+      alert("Server error. Please try again.");
     }
   };
 
@@ -38,9 +72,8 @@ function Login() {
     <div className="page-content">
       <div className="login-container">
         <h2 className="page-title">Login / Signup</h2>
-        
+
         {step === 1 ? (
-          // Phone number step
           <>
             <p>Enter phone to receive OTP</p>
             <div className="input-group">
@@ -58,7 +91,6 @@ function Login() {
             </button>
           </>
         ) : (
-          // OTP step
           <>
             <p>Enter OTP sent to {phone}</p>
             <div className="input-group">
@@ -76,9 +108,11 @@ function Login() {
             </button>
           </>
         )}
-        
-        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-          <Link to="/cart" className="login-link">← Back to Cart</Link>
+
+        <div style={{ textAlign: "center", marginTop: "1rem" }}>
+          <Link to="/cart" className="login-link">
+            ← Back to Cart
+          </Link>
         </div>
       </div>
     </div>
