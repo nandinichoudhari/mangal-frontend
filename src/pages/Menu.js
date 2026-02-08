@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";  // 🔥 ADDED useEffect
 
 const PRODUCTS = [
   // NAMKIN
@@ -42,18 +42,47 @@ const SECTIONS = {
   TRADITIONAL: PRODUCTS.filter(p => p.section === "TRADITIONAL"),
 };
 
-function Menu({ addToCart, searchTerm = "" }) {  // 👈 Added searchTerm
+function Menu({ addToCart, searchTerm = "" }) {
   const [activeTab, setActiveTab] = useState("NAMKIN");
   const [quantities, setQuantities] = useState({});
 
-  const updateQuantity = (id, change) => {
-    setQuantities(prev => ({
-      ...prev,
-      [id]: Math.max(0, (prev[id] || 0) + change)
-    }));
+  // 🔥 LOAD quantities from localStorage
+  useEffect(() => {
+    const savedQuantities = localStorage.getItem('menuQuantities');
+    if (savedQuantities) {
+      setQuantities(JSON.parse(savedQuantities));
+    }
+  }, []);
+
+  // 🔥 SAVE quantities to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('menuQuantities', JSON.stringify(quantities));
+  }, [quantities]);
+
+  // 🔥 LOAD activeTab from localStorage
+  useEffect(() => {
+    const savedTab = localStorage.getItem('menuActiveTab');
+    if (savedTab && SECTIONS[savedTab]) {
+      setActiveTab(savedTab);
+    }
+  }, []);
+
+  // 🔥 PERSISTENT tab update
+  const updateActiveTab = (tab) => {
+    setActiveTab(tab);
+    localStorage.setItem('menuActiveTab', tab);
   };
 
-  // 👈 SEARCH FILTER LOGIC
+  const updateQuantity = (id, change) => {
+    setQuantities(prev => {
+      const newQty = Math.max(0, (prev[id] || 0) + change);
+      const newQuantities = { ...prev, [id]: newQty };
+      localStorage.setItem('menuQuantities', JSON.stringify(newQuantities));
+      return newQuantities;
+    });
+  };
+
+  // SEARCH FILTER LOGIC
   const allProducts = Object.values(SECTIONS).flat();
   const filteredProducts = searchTerm
     ? allProducts.filter(product => 
@@ -67,14 +96,14 @@ function Menu({ addToCart, searchTerm = "" }) {  // 👈 Added searchTerm
     <>
       <h2 className="page-title">Our Menu</h2>
 
-      {/* 👈 Hide tabs when searching */}
+      {/* Hide tabs when searching */}
       {!searchTerm && (
         <div className="menu-tabs">
           {Object.keys(SECTIONS).map(tab => (
             <button
               key={tab}
               className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => updateActiveTab(tab)}  // 🔥 Persistent tab
             >
               {tab}
             </button>
@@ -82,7 +111,7 @@ function Menu({ addToCart, searchTerm = "" }) {  // 👈 Added searchTerm
         </div>
       )}
 
-      {/* 👈 Show search results */}
+      {/* Show search results */}
       {searchTerm && (
         <div className="search-results-info">
           Found {products.length} items matching "{searchTerm}"
@@ -117,6 +146,7 @@ function Menu({ addToCart, searchTerm = "" }) {  // 👈 Added searchTerm
                 </button>
               </div>
               
+              {/* ✅ FIXED: Proper Add to Cart button */}
               <button
                 className="menu-add-btn"
                 onClick={() => qty > 0 && addToCart({ ...item, quantity: qty })}
@@ -130,7 +160,7 @@ function Menu({ addToCart, searchTerm = "" }) {  // 👈 Added searchTerm
       </div>
 
       <div className="text-box">
-        <p><strong>📞 Contact:</strong> 982531370 | WhatsApp for orders</p>
+        <p><strong>📞 Contact:</strong> 982512137 | WhatsApp for orders</p>
       </div>
     </>
   );

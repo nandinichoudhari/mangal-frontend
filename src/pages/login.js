@@ -1,56 +1,66 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 function Login() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState("phone");
+  const [step, setStep] = useState(1); // 1=phone, 2=otp
   const navigate = useNavigate();
 
   const sendOtp = () => {
     if (phone.length === 10) {
-      setStep("otp");
+      setStep(2); // Go to OTP step
+    } else {
+      alert("Enter valid 10-digit phone number");
     }
   };
 
+  // 🔥 FIXED verifyOtp function
   const verifyOtp = () => {
     if (otp === "1234") {
       localStorage.setItem("loggedIn", "true");
       localStorage.setItem("phone", phone);
-      navigate("/order");
+      
+      // 🔥 REDIRECT BACK TO CHECKOUT FLOW
+      const cartItems = JSON.parse(localStorage.getItem('cart') || '[]');
+      if (cartItems.length > 0) {
+        const address = localStorage.getItem('deliveryAddress');
+        navigate(address ? "/payment" : "/address"); // Checkout flow
+      } else {
+        navigate("/cart"); // Normal flow
+      }
     } else {
       alert("Wrong OTP. Try 1234");
     }
   };
 
   return (
-    <>
-      <h2 className="page-title">Login</h2>
+    <div className="page-content">
       <div className="login-container">
-        {step === "phone" ? (
+        <h2 className="page-title">Login / Signup</h2>
+        
+        {step === 1 ? (
+          // Phone number step
           <>
-            <p className="section-subtitle">Enter contact number</p>
+            <p>Enter phone to receive OTP</p>
             <div className="input-group">
               <input
                 type="tel"
-                placeholder="Enter 10-digit phone"
+                placeholder="98XXXXXXXX"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="login-input"
                 maxLength="10"
               />
-              <button 
-                className="login-btn" 
-                onClick={sendOtp}
-                disabled={phone.length !== 10}
-              >
-                Send OTP
-              </button>
             </div>
+            <button className="login-btn" onClick={sendOtp}>
+              Send OTP
+            </button>
           </>
         ) : (
+          // OTP step
           <>
-            <p className="section-subtitle">Enter OTP sent to {phone}</p>
+            <p>Enter OTP sent to {phone}</p>
             <div className="input-group">
               <input
                 type="text"
@@ -60,17 +70,18 @@ function Login() {
                 className="login-input"
                 maxLength="4"
               />
-              <button 
-                className="login-btn" 
-                onClick={verifyOtp}
-              >
-                Continue to Order
-              </button>
             </div>
+            <button className="login-btn" onClick={verifyOtp}>
+              Verify & Continue
+            </button>
           </>
         )}
+        
+        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+          <Link to="/cart" className="login-link">← Back to Cart</Link>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
