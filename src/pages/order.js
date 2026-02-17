@@ -1,108 +1,69 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
-function Order() {
+function Orders() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('cart');
-    if (saved) {
-      setCartItems(JSON.parse(saved));
+    const phone = localStorage.getItem('phone');
+    if (!phone) {
+      navigate('/login');
+      return;
     }
-  }, []);
 
-  const totalItems = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
-  const delivery = 0;
-  const total = subtotal + delivery;
+    // Fetch from YOUR backend /api/orders endpoint
+    fetch('http://localhost:5000/api/orders')
+      .then(res => res.json())
+      .then(data => {
+        setOrders(data.orders || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [navigate]);
 
-  const placeOrder = () => {
-    // 🔥 NO ALERT POPUP - Just clear cart & go home
-    localStorage.removeItem('cart');
-    localStorage.removeItem('deliveryAddress');
-    navigate("/"); // Go to home page silently
-  };
-
-  if (cartItems.length === 0) {
-    return (
-      <div className="order-page cart-page">
-        <div className="empty-cart">
-          <div className="empty-icon">📋</div>
-          <h2 className="page-title">No Items to Order</h2>
-          <p className="empty-text">Your cart is empty. Add items first!</p>
-          <button className="cta-btn" onClick={() => navigate("/menu")}>
-            Shop Now
-          </button>
-        </div>
-      </div>
-    );
+  if (loading) {
+    return <div className="page-content"><h2>🔄 Loading Orders...</h2></div>;
   }
 
   return (
-    <div className="order-page cart-page">
-      <div className="cart-header">
-        <h2 className="page-title">Order Confirmed ({totalItems} items)</h2>
-        <button className="continue-shopping" onClick={() => navigate("/cart")}>
-          ← Edit Cart
-        </button>
-      </div>
-
-      <div className="order-success">
-        <div className="success-icon">✅</div>
-        <h3>Your order has been placed successfully!</h3>
-        <p>We'll call you on <strong>982531370</strong> to confirm delivery details.</p>
-      </div>
-
-      {/* Order Items */}
-      <div className="cart-items">
-        {cartItems.map((item) => {
-          const qty = item.quantity || 1;
-          const itemTotal = item.price * qty;
-          return (
-            <div key={item.id} className="cart-item-row">
-              <div className="cart-item-image">
-                <span>{item.emoji || '🍽️'}</span>
+    <div className="page-content">
+      <div className="orders-page">
+        <div className="cart-header">
+          <h2 className="page-title">My Orders ({orders.length})</h2>
+          <Link to="/menu" className="continue-shopping">← Continue Shopping</Link>
+        </div>
+        
+        {orders.length === 0 ? (
+          <div className="empty-cart">
+            <div className="empty-icon">🧾</div>
+            <h3>No orders yet</h3>
+            <p>Your order history will appear here!</p>
+          </div>
+        ) : (
+          orders.map(order => (
+            <div key={order._id} className="order-card" style={{
+              border: '1px solid #ddd', 
+              margin: '1rem 0', 
+              padding: '1rem', 
+              borderRadius: '8px'
+            }}>
+              <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                <strong>Order #{order._id?.slice(-6)}</strong>
+                <span>{new Date(order.timestamp).toLocaleDateString()}</span>
               </div>
-              <div className="cart-item-details">
-                <h3 className="cart-item-name">{item.name}</h3>
-                <p className="cart-item-price">₹{item.price} x {qty}</p>
+              <div>Total: <strong>₹{order.total}</strong></div>
+              <div>{order.items.length} items • {order.status}</div>
+              <div style={{fontSize: '0.9rem', color: '#666'}}>
+                {order.paymentMethod} • {new Date(order.timestamp).toLocaleTimeString()}
               </div>
-              <div className="item-total">₹{itemTotal}</div>
             </div>
-          );
-        })}
-      </div>
-
-      <div className="cart-summary">
-        <div className="summary-row">
-          <span>Subtotal ({totalItems} items):</span>
-          <span>₹{subtotal}</span>
-        </div>
-        <div className="summary-row delivery">
-          <span>Delivery:</span>
-          <span className="free">FREE</span>
-        </div>
-        <div className="summary-total">
-          <span>Total:</span>
-          <strong>₹{total}</strong>
-        </div>
-      </div>
-
-      <div className="order-info">
-        <h3>📞 Next Steps</h3>
-        <p>Our team will call you within 30 minutes to confirm delivery time.</p>
-        <p><strong>Payment:</strong> Cash on Delivery</p>
-        <p><strong>Delivery:</strong> Same day within Mumbai</p>
-      </div>
-
-      <div className="cart-actions">
-        <button className="cta-btn" onClick={placeOrder}>
-          Continue Shopping
-        </button>
+          ))
+        )}
       </div>
     </div>
   );
 }
 
-export default Order;
+export default Orders;

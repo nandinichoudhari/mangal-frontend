@@ -7,10 +7,13 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Cart from "./pages/Cart";
 import Login from "./pages/login";
-import Order from "./pages/order";
-import Payment from "./pages/Payment";        // 🔥 ADD
-import Address from "./pages/Address";        // 🔥 ADD  
-import OrderConfirmed from "./pages/OrderConfirmed"; // 🔥 ADD
+import Order from "./pages/OrderConfirmation";
+import Payment from "./pages/Payment";
+import Address from "./pages/Address";        
+import OrderConfirmed from "./pages/OrderConfirmed";
+
+// 🔥 ADD THIS - Create Orders.js first, then uncomment
+// import Orders from "./pages/Orders";
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
@@ -65,12 +68,14 @@ function App() {
           <Route path="/menu" element={<Menu addToCart={addToCart} />} />
           <Route path="/cart" element={<Cart items={cartItems} setItems={setCartItems} />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/address" element={<Address />} />          {/* 🔥 ADD */}
-          <Route path="/payment" element={<Payment />} />         {/* 🔥 ADD */}
+          <Route path="/address" element={<Address />} />
+          <Route path="/payment" element={<Payment />} />
           <Route path="/order" element={<Order />} />
-          <Route path="/order-confirmed" element={<OrderConfirmed />} />  {/* ✅ NOW WORKS */}
+          <Route path="/order-confirmed" element={<OrderConfirmed />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          {/* 👇 ADD THIS AFTER CREATING Orders.js */}
+          {/* <Route path="/orders" element={<Orders />} /> */}
         </Routes>
       </main>
       <footer className="site-footer">

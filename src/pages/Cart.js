@@ -36,26 +36,51 @@ function Cart({ items, setItems }) {
   const totalItems = validItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
   const total = validItems.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
   
-  // 🔥 LOGIN CHECK FIRST, THEN ADDRESS, THEN PAYMENT
-  const handleCheckout = () => {
+  // 🔥 UPGRADED CHECKOUT - SAVES ORDER DIRECTLY
+  const handleCheckout = async () => {
     const isLoggedIn = localStorage.getItem("loggedIn") === "true";
     
     if (!isLoggedIn) {
-      // 1️⃣ NOT LOGGED IN → LOGIN FIRST
       navigate("/login");
       return;
     }
 
-    // 2️⃣ LOGGED IN → CHECK ADDRESS
     const address = localStorage.getItem('deliveryAddress');
     if (!address) {
-      // NO ADDRESS → ADDRESS PAGE
       navigate("/address");
       return;
     }
 
-    // 3️⃣ HAS ADDRESS → PAYMENT
-    navigate("/payment");
+    // ✅ SAVE ORDER TO BACKEND
+    try {
+      const phone = localStorage.getItem('phone') || "8866440011";
+      
+      const response = await fetch('http://localhost:5000/api/test-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: phone,
+          items: validItems.map(item => ({
+            name: item.name,
+            price: item.price,
+            qty: item.quantity || 1,
+            emoji: item.emoji
+          })),
+          total: total
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert(`✅ Order placed successfully! (${result.ordersCount} orders)`);
+        setItems([]); // Clear cart
+        navigate('/orders'); // Go to orders page
+      }
+    } catch (error) {
+      console.error('Order failed:', error);
+      alert('❌ Order failed - please try again');
+    }
   };
 
   return (
@@ -66,7 +91,6 @@ function Cart({ items, setItems }) {
       </div>
       
       <div className="cart-items">
-        {/* Items list stays same... */}
         {validItems.map((item) => {
           const qty = item.quantity || 1;
           const itemTotal = item.price * qty;
@@ -110,13 +134,11 @@ function Cart({ items, setItems }) {
         </div>
       </div>
 
-      {/* 🔥 SMART CHECKOUT BUTTON */}
+      {/* ✅ SINGLE CLEAN BUTTON */}
       <div className="cart-actions">
         <button className="checkout-btn" onClick={handleCheckout}>
-          {localStorage.getItem("loggedIn") === "true" 
-            ? localStorage.getItem('deliveryAddress') 
-              ? "💳 Proceed to Payment" 
-              : "📍 Enter Delivery Address"
+          {localStorage.getItem("loggedIn") === "true" && localStorage.getItem('deliveryAddress')
+            ? "🧾 Place Order Now" 
             : "🔐 Login to Checkout"
           } ₹{total}
         </button>

@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+// import { UserContext } from "../contexts/UserContext"; // REMOVED
 
 function Login() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState(1); // 1 = phone, 2 = otp
   const navigate = useNavigate();
+  // const { fetchUserOrders } = useContext(UserContext); // REMOVED
 
-  // SEND OTP (calls backend)
+  // SEND OTP - RAW 10 digits
   const sendOtp = async () => {
     if (phone.length !== 10) {
       alert("Enter valid 10-digit phone number");
@@ -15,18 +17,17 @@ function Login() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/send-otp", {
+      const res = await fetch("http://localhost:5000/api/auth/send-otp", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone })
       });
 
       const data = await res.json();
-
+      
       if (data.success) {
         setStep(2);
+        alert(`✅ OTP Generated! Check backend terminal: ${data.testOtp || '???'} `);
       } else {
         alert(data.message || "Failed to send OTP");
       }
@@ -35,24 +36,30 @@ function Login() {
     }
   };
 
-  // VERIFY OTP (creates user in MongoDB)
+  // VERIFY OTP - SIMPLIFIED VERSION
   const verifyOtp = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/verify-otp", {
+      console.log('🔍 Verifying phone:', phone);
+      console.log('🔍 Verifying OTP:', otp);
+      
+      const res = await fetch("http://localhost:5000/api/auth/verify-otp", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ phone, otp })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          phone, 
+          otp 
+        })
       });
 
       const data = await res.json();
+      console.log('🔍 Verify response:', data);
 
       if (data.success) {
         localStorage.setItem("loggedIn", "true");
         localStorage.setItem("phone", phone);
-
-        // Redirect logic (kept exactly as you designed)
+        
+        // REMOVED UserContext code - works without it
+        
         const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
         if (cartItems.length > 0) {
           const address = localStorage.getItem("deliveryAddress");
@@ -64,6 +71,7 @@ function Login() {
         alert(data.message || "Invalid OTP");
       }
     } catch (error) {
+      console.error('Verify error:', error);
       alert("Server error. Please try again.");
     }
   };
